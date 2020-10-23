@@ -163,37 +163,37 @@ router.get("/offers", async (req, res) => {
   try {
     // define variables from query
     let { title, priceMin, priceMax, page, sort } = req.query;
-    
+
     let filters = {};
-    if(title) {
-      filters.product_name= new RegExp(title, "i");
+    if (title) {
+      filters.product_name = new RegExp(title, "i");
     }
-    if(priceMin) {
-      filters.product_price = {$gte = priceMin}
+    if (priceMin) {
+      filters.product_price = { $gte: priceMin };
     }
-    if(priceMax) {
+    if (priceMax) {
       if (filters.product_price) {
         filters.product_price.$lte = priceMax;
       } else {
         filters.product_price = {
-          $lte: priceMax
-        }
+          $lte: priceMax,
+        };
       }
     }
-    
-    let sorted = {}
+
+    let sorted = {};
     if (sort === "price-desc") {
-      sorted = {product_price : -1}
+      sorted = { product_price: -1 };
     } else {
-      sorted = {product_price : 1}
+      sorted = { product_price: 1 };
     }
 
     if (Number(page) < 1) {
-      page = 1
+      page = 1;
     } else {
-      page = Number(page)
+      page = Number(page);
     }
-    
+
     // Fixed value of result per page
     const limitPerPage = 2;
 
@@ -204,7 +204,7 @@ router.get("/offers", async (req, res) => {
       .skip(limitPerPage * (page - 1));
 
     // count
-    const count = await Offer.countDocuments(result);
+    const count = await Offer.countDocuments(filters);
 
     res.json({ count: count, offers: result });
   } catch (error) {
