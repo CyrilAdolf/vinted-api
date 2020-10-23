@@ -2,16 +2,16 @@ const express = require("express");
 const router = express.Router();
 const { enc } = require("crypto-js");
 
-// Import model
+// Import models
 const User = require("../models/User");
 const Offer = require("../models/Offer");
 
 // Import and ID specification for Cloudinary
 const cloudinary = require("cloudinary");
 cloudinary.config({
-  cloud_name: "cyrila",
-  api_key: "642784334279441",
-  api_secret: "Ce-NNZhcZ_5ABTTu4zi1LNjKvAo",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
 });
 
 const isAuthenticated = require("../Middleware/isAuthenticated");
@@ -108,7 +108,7 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
           { COULEUR: color },
         ];
 
-        // Proceed the update
+        // Proceed to the update
         if (title) {
           offerToUpdate.product_name = title;
         }
@@ -158,12 +158,12 @@ router.delete("/offer/delete", isAuthenticated, async (req, res) => {
   }
 });
 
-// Consult the offers (ADD MIDDLEWARE IF NEEDED).
+// Consult the offers
 router.get("/offers", async (req, res) => {
   try {
     // define variables from query
     let { title, priceMin, priceMax, page, sort } = req.query;
-
+    // define a filters object to be tested
     let filters = {};
     if (title) {
       filters.product_name = new RegExp(title, "i");
@@ -180,7 +180,7 @@ router.get("/offers", async (req, res) => {
         };
       }
     }
-
+    // define sorted condition
     let sorted = {};
     if (sort === "price-desc") {
       sorted = { product_price: -1 };
@@ -194,16 +194,16 @@ router.get("/offers", async (req, res) => {
       page = Number(page);
     }
 
-    // Fixed value of result per page
+    // FIXED LIMIT
+    // FIXED LIMIT
+    // FIXED LIMIT
     const limitPerPage = 2;
 
-    // find offers that match asked parameters
     const result = await Offer.find(filters)
       .sort(sorted)
       .limit(limitPerPage)
       .skip(limitPerPage * (page - 1));
 
-    // count
     const count = await Offer.countDocuments(filters);
 
     res.json({ count: count, offers: result });
@@ -212,7 +212,7 @@ router.get("/offers", async (req, res) => {
   }
 });
 
-// Get ONE offer (by ID)
+// Get ONE offer (PARAMS)
 router.get("/offer/:id", async (req, res) => {
   try {
     let result = await Offer.findById(req.params.id);

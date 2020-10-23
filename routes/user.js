@@ -17,25 +17,20 @@ router.post("/user/signup", async (req, res) => {
   try {
     const { email, username, phone, password } = req.fields;
 
-    // Est-ce qu'un user possède déjà cet email ?
     const user = await User.findOne({ email: email });
-    // Si oui, on renvoie un message d'erreur
+    // Is the email already registered ?
     if (user) {
       res.status(409).json({
         message: "This email already has an account",
       });
     } else {
-      // Sinon, on passe à la suite
-
-      // est-ce que je reçois les infos nécessaires ?
+      // Data required
       if (email && username && password) {
-        // on peut créer le user
-        // Etape 1 : encrypter le mot de passe
-        // Générer token + encrypter MDP
+        // step1: Create token, encrypt password
         const token = uid2(64);
         const salt = uid2(64);
         const hash = SHA256(password + salt).toString(encBase64);
-        // Etape 2 : créer le nouveau user
+        // step2: Create a new user
         const newUser = new User({
           email: email,
           account: {
@@ -46,9 +41,9 @@ router.post("/user/signup", async (req, res) => {
           hash: hash,
           salt: salt,
         });
-        // Etpae 3 : sauvegarder le nouveau user
+        // step3: save the user
         await newUser.save();
-        // Etape 4 : répondre au client
+        // step4: resonse without hash and salt
         res.status(200).json({
           _id: newUser._id,
           email: newUser.email,
@@ -70,13 +65,11 @@ router.post("/user/signup", async (req, res) => {
 router.post("/user/login", async (req, res) => {
   try {
     const { email, password } = req.fields;
-    // Quel est le user qui souhaite se loguer ?
+    // Find the user in the DB
     const user = await User.findOne({ email: email });
     console.log(user);
-    // S'il existe dans la BDD
     if (user) {
-      // On fait la suite
-      // Est-ce qu'il a rentré le bon mot de passe ?
+      // Check the recorded hash with the one generate from salt and password
       const testHash = SHA256(password + user.salt).toString(encBase64);
       if (testHash === user.hash) {
         res.status(200).json({
@@ -84,14 +77,12 @@ router.post("/user/login", async (req, res) => {
           token: user.token,
           account: user.account,
         });
-        // Le mot de passe n'est pas bon
       } else {
         res.status(401).json({
           message: "Unauthorized",
         });
       }
     } else {
-      // Sinon => erreur
       res.status(400).json({
         message: "User not found",
       });
