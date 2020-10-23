@@ -158,36 +158,48 @@ router.delete("/offer/delete", isAuthenticated, async (req, res) => {
   }
 });
 
-// _______________________________________________________________
-// EXERCISE october 22
-// _______________________________________________________________
-
 // Consult the offers (ADD MIDDLEWARE IF NEEDED).
 router.get("/offers", async (req, res) => {
   try {
     // define variables from query
-    // treat Cases where query are not defined
-    // treat Cases where query are not defined
-    // treat Cases where query are not defined
-    // treat Cases where query are not defined
     let { title, priceMin, priceMax, page, sort } = req.query;
-    if (!page) {
-      page = 1;
+    
+    let filters = {};
+    if(title) {
+      filters.product_name= new RegExp(title, "i");
     }
-    if (req.query.sort === "price-desc") {
-      sort = -1;
+    if(priceMin) {
+      filters.product_price = {$gte = priceMin}
+    }
+    if(priceMax) {
+      if (filters.product_price) {
+        filters.product_price.$lte = priceMax;
+      } else {
+        filters.product_price = {
+          $lte: priceMax
+        }
+      }
+    }
+    
+    let sorted = {}
+    if (sort === "price-desc") {
+      sorted = {product_price : -1}
     } else {
-      sort = 1;
+      sorted = {product_price : 1}
     }
+
+    if (Number(page) < 1) {
+      page = 1
+    } else {
+      page = Number(page)
+    }
+    
     // Fixed value of result per page
     const limitPerPage = 2;
 
     // find offers that match asked parameters
-    const result = await Offer.find({
-      product_name: new RegExp(title, "i"),
-      product_price: { $gte: priceMin, $lte: priceMax },
-    })
-      .sort({ product_price: sort })
+    const result = await Offer.find(filters)
+      .sort(sorted)
       .limit(limitPerPage)
       .skip(limitPerPage * (page - 1));
 
