@@ -158,7 +158,7 @@ router.delete("/offer/delete", isAuthenticated, async (req, res) => {
   }
 });
 
-// Consult the offers
+// To consult the offers
 router.get("/offers", async (req, res) => {
   try {
     // define variables from query
@@ -195,11 +195,10 @@ router.get("/offers", async (req, res) => {
     }
 
     // FIXED LIMIT
-    // FIXED LIMIT
-    // FIXED LIMIT
-    const limitPerPage = 2;
+    const limitPerPage = 8;
 
     const result = await Offer.find(filters)
+      .populate({ path: "owner", select: "account" })
       .sort(sorted)
       .limit(limitPerPage)
       .skip(limitPerPage * (page - 1));
