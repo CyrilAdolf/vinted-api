@@ -32,7 +32,7 @@ app.use(offerRoutes);
 
 // PAYMENT ROUTE
 // PAYMENT ROUTE
-router.post("/payment", async (req, res) => {
+app.post("/payment", async (req, res) => {
   try {
     // REQ COMING FROM FRONTEND VIA STRIPE API
     const stripeToken = req.fields.stripeToken;
