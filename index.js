@@ -4,6 +4,7 @@ const express = require("express");
 const formidable = require("express-formidable");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 const app = express();
 app.use(formidable());
@@ -28,6 +29,32 @@ const userRoutes = require("./routes/user");
 app.use(userRoutes);
 const offerRoutes = require("./routes/offer");
 app.use(offerRoutes);
+
+// PAYMENT ROUTE
+// PAYMENT ROUTE
+router.post("/payment", async (req, res) => {
+  try {
+    // REQ COMING FROM FRONTEND VIA STRIPE API
+    const stripeToken = req.fields.stripeToken;
+    // REQ TO STRIPE API WITH DATA
+    const response = await stripe.charges.create({
+      amount: 200,
+      currency: "eur",
+      description: "Masque chirurgical... ",
+      source: stripeToken,
+      // SOURCE VALUE = THE TOKEN
+    });
+    console.log(response);
+
+    // SAVE IN MONGODB
+    // SAVE IN MONGODB
+    // SAVE IN MONGODB
+
+    res.json(response);
+  } catch (error) {
+    console.log(error.message);
+  }
+});
 
 app.all("*", (req, res) => {
   res.status(404).json({ message: "all routes" });
