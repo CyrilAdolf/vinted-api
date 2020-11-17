@@ -162,7 +162,7 @@ router.delete("/offer/delete", isAuthenticated, async (req, res) => {
 router.get("/offers", async (req, res) => {
   try {
     // define variables from query
-    let { title, priceMin, priceMax, page, sort } = req.query;
+    let { title, priceMin, priceMax, page, sort, limit } = req.query;
     // define a filters object to be tested
     let filters = {};
     if (title) {
@@ -194,14 +194,11 @@ router.get("/offers", async (req, res) => {
       page = Number(page);
     }
 
-    // FIXED LIMIT
-    const limitPerPage = 8;
-
     const result = await Offer.find(filters)
       .populate({ path: "owner", select: "account" })
       .sort(sorted)
-      .limit(limitPerPage)
-      .skip(limitPerPage * (page - 1));
+      .limit(limit)
+      .skip(limit * (page - 1));
 
     const count = await Offer.countDocuments(filters);
 
