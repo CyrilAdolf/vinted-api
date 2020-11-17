@@ -34,13 +34,14 @@ app.use(offerRoutes);
 // PAYMENT ROUTE
 app.post("/payment", async (req, res) => {
   try {
-    // REQ COMING FROM FRONTEND VIA STRIPE API
-    const stripeToken = req.fields.stripeToken;
+    // REQ COMING FROM FRONTEND CONTAINING STRIPE TOKEN
+    const { stripeToken, price, descritpion } = req.fields;
+
     // REQ TO STRIPE API WITH DATA
     const response = await stripe.charges.create({
-      amount: 200,
+      amount: price,
       currency: "eur",
-      description: "Masque chirurgical... ",
+      description: descritpion,
       source: stripeToken,
       // SOURCE VALUE = THE TOKEN
     });
