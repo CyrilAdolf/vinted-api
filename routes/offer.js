@@ -231,7 +231,7 @@ router.post("/payment", async (req, res) => {
     console.log(stripeToken);
     // REQ TO STRIPE API WITH DATA
     const response = await stripe.charges.create({
-      amount: Number(price.toFixed(2)) * 100,
+      amount: Number(parseInt(price).toFixed(2)) * 100,
       currency: "eur",
       description: descritpion,
       source: stripeToken,
