@@ -30,33 +30,6 @@ app.use(userRoutes);
 const offerRoutes = require("./routes/offer");
 app.use(offerRoutes);
 
-// PAYMENT ROUTE
-// PAYMENT ROUTE
-app.post("/payment", async (req, res) => {
-  try {
-    // REQ COMING FROM FRONTEND CONTAINING STRIPE TOKEN
-    const { stripeToken, price, descritpion } = req.fields;
-
-    // REQ TO STRIPE API WITH DATA
-    const response = await stripe.charges.create({
-      amount: price,
-      currency: "eur",
-      description: descritpion,
-      source: stripeToken,
-      // SOURCE VALUE = THE TOKEN
-    });
-    console.log(response);
-
-    // SAVE IN MONGODB
-    // SAVE IN MONGODB
-    // SAVE IN MONGODB
-
-    res.json(response);
-  } catch (error) {
-    console.log(error.message);
-  }
-});
-
 app.all("*", (req, res) => {
   res.status(404).json({ message: "all routes" });
 });
