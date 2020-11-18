@@ -199,7 +199,7 @@ router.get("/offers", async (req, res) => {
       .populate({ path: "owner", select: "account" })
       .sort(sorted)
       .skip(limit * (page - 1))
-      .limit(limit);
+      .limit(parseInt(limit));
 
     const count = await Offer.countDocuments(filters);
 
