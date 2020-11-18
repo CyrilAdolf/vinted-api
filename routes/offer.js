@@ -227,7 +227,7 @@ router.post("/payment", async (req, res) => {
   try {
     // REQ COMING FROM FRONTEND CONTAINING STRIPE TOKEN
     const { stripeToken, price, descritpion } = req.fields;
-
+    console.log(price);
     // REQ TO STRIPE API WITH DATA
     const response = await stripe.charges.create({
       amount: price,

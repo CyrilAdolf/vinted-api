@@ -33,6 +33,10 @@ app.all("*", (req, res) => {
   res.status(404).json({ message: "all routes" });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log("Server Started on port : " + process.env.PORT);
-});
+app.listen(
+  // process.env.PORT
+  3100,
+  () => {
+    console.log("Server Started on port : " + process.env.PORT);
+  }
+);
