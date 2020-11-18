@@ -4,7 +4,6 @@ const express = require("express");
 const formidable = require("express-formidable");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 const app = express();
 app.use(formidable());

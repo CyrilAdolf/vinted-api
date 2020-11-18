@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { enc } = require("crypto-js");
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 // Import models
 const User = require("../models/User");
