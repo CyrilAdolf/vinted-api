@@ -1,36 +1,33 @@
 const express = require("express");
 const router = express.Router();
+
+// UID2 AND CRYPTO-JS ARE USED TO DEAL WITH PASSWORD SECURITY
 const uid2 = require("uid2");
 const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
 
-// Import model
+// MODEL IMPORT
 const User = require("../models/User");
-const { enc } = require("crypto-js");
 const Offer = require("../models/Offer");
 
-// Import middlewares
-const isAuthenticated = require("../Middleware/isAuthenticated");
-
-// Signup
+// SIGNUP
 router.post("/user/signup", async (req, res) => {
   try {
     const { email, username, phone, password } = req.fields;
-
+    // console.log(req.fields);
     const user = await User.findOne({ email: email });
-    // Is the email already registered ?
+    // USER ALREADY REGISTERED?
     if (user) {
       res.status(409).json({
         message: "This email already has an account",
       });
     } else {
-      // Data required
       if (email && username && password) {
-        // step1: Create token, encrypt password
+        // 1. CREATE TOKEN, ENCRYPT PASSWORD
         const token = uid2(64);
         const salt = uid2(64);
         const hash = SHA256(password + salt).toString(encBase64);
-        // step2: Create a new user
+        // 2. CREATE A NEW USER
         const newUser = new User({
           email: email,
           account: {
@@ -41,9 +38,9 @@ router.post("/user/signup", async (req, res) => {
           hash: hash,
           salt: salt,
         });
-        // step3: save the user
+        // 3. SAVE THE USER
         await newUser.save();
-        // step4: resonse without hash and salt
+        // 4. SEND RESPONSE WITHOUT HASH AND SALT
         res.status(200).json({
           _id: newUser._id,
           email: newUser.email,
@@ -61,15 +58,15 @@ router.post("/user/signup", async (req, res) => {
   }
 });
 
-// Login
+// LOGIN
 router.post("/user/login", async (req, res) => {
   try {
     const { email, password } = req.fields;
-    // Find the user in the DB
+    // FIND USER IN THE DATABASE
     const user = await User.findOne({ email: email });
-    console.log(user);
+    // console.log(user);
     if (user) {
-      // Check the recorded hash with the one generate from salt and password
+      // COMPARE SAVED AND NEWLY GENERATED HASH
       const testHash = SHA256(password + user.salt).toString(encBase64);
       if (testHash === user.hash) {
         res.status(200).json({

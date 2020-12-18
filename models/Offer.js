@@ -19,7 +19,10 @@ const Offer = mongoose.model("Offer", {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  product_image: { type: mongoose.Schema.Types.Mixed, default: {} },
+  product_image: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
 });
 
 module.exports = Offer;

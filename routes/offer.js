@@ -1,13 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { enc } = require("crypto-js");
+
+// IMPORT STRIPE FOR PAYMENT FUNCTIONNALITY
+// KEY IN DOTENV FILE
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 // Import models
 const User = require("../models/User");
 const Offer = require("../models/Offer");
 
-// Import and ID specification for Cloudinary
+// IMPORT AND CONFIG CLOUDINARY
 const cloudinary = require("cloudinary");
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,13 +20,12 @@ cloudinary.config({
 const isAuthenticated = require("../Middleware/isAuthenticated");
 const { count } = require("../models/User");
 
-// Publish
+// CREATE
 router.post("/offer/publish", isAuthenticated, async (req, res) => {
+  // ONLY AUTHENTICATED USER GET ACCESS THROUGH MIDDLEWARE
   try {
-    // We got access to actualUser through isAuthenticated
+    // VAR ADDED VIA MIDDLEWARE
     const owner = req.actualUser;
-
-    // Store data from fields parameters
     const {
       title,
       description,
@@ -35,6 +36,7 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
       size,
       color,
     } = req.fields;
+    // GENERATE DATA USING MODEL TEMPLATE
     const product_details = [];
     product_details.push(
       { ETAT: condition },
@@ -43,6 +45,7 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
       { TAILLE: size },
       { COULEUR: color }
     );
+    // CREATE AND SAVE A NEW OFFER
     const newOffer = new Offer({
       product_name: title,
       product_description: description,
@@ -50,17 +53,15 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
       product_details,
       owner,
     });
-
     await newOffer.save();
     const offerId = newOffer._id;
-    // save the picture path to send to cloudinary.v2
+    // SAVE THE PICTURE PATH TO SEND TO CLOUDINARY
     const pictureToUpload = req.files.picture.path;
-
     const result = await cloudinary.v2.uploader.upload(pictureToUpload, {
       folder: `/vinted/offers/${offerId}`,
     });
-
-    // To update offer
+    // UPDATE OFFER WITH PICTURE
+    // THIS STEP BY STEP METHOD WAS USED TO SAVE PICTURE IN A FILE NAMED BY THE ID, IT NEEDED TO BE GENERATED BEFORE SENDING THE PICTURE.
     (newOffer.product_image = result), await newOffer.save();
     res.json(newOffer);
   } catch (error) {
@@ -68,7 +69,7 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
   }
 });
 
-// Update an offer
+// UPDATE
 router.put("/offer/modify", isAuthenticated, async (req, res) => {
   try {
     const {
@@ -82,7 +83,7 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
       color,
     } = req.fields;
     const pictureToUpload = req.files.picture.path;
-    // Check if something to update
+    // CHECK IF SOMETHING TO UPDATE
     if (
       !title &&
       !description &&
@@ -96,9 +97,9 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
     ) {
       res.json({ msg: "not enough data for an update" });
     } else {
+      // FIND THE TARGETED OFFER
       const offerId = await Offer.findById(req.query._id);
       const ownerId = offerId.owner;
-
       if (ownerId.toString() === req.actualUser._id.toString()) {
         const offerToUpdate = await Offer.findOne({ _id: offerId });
         const product_details = [
@@ -108,8 +109,7 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
           { TAILLE: size },
           { COULEUR: color },
         ];
-
-        // Proceed to the update
+        // PROCEED TO UPDATE
         if (title) {
           offerToUpdate.product_name = title;
         }
@@ -128,7 +128,7 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
           });
           offerToUpdate.product_image = result;
         }
-
+        // SAVE OFFER
         await offerToUpdate.save();
         res.status(200).json({ msg: "Offers successfully updated" });
       } else {
@@ -141,15 +141,15 @@ router.put("/offer/modify", isAuthenticated, async (req, res) => {
   }
 });
 
-// Delete an offer
+// DELETE
 router.delete("/offer/delete", isAuthenticated, async (req, res) => {
   try {
+    // FIND TARGETED OFFER
     const owner = await Offer.findById(req.query._id);
     const ownerId = owner.owner;
-
+    // CHECK IF OWNER IS LINKED TO THE OFFER
     if (owner.owner.toString() === req.actualUser._id.toString()) {
       await Offer.deleteOne({ owner: ownerId });
-
       res.status(200).json({ msg: "Offers successfully deleted" });
     } else {
       res.status(400).json({ msg: "Offer NOT deleted" });
@@ -159,12 +159,11 @@ router.delete("/offer/delete", isAuthenticated, async (req, res) => {
   }
 });
 
-// To consult the offers
+// READ
 router.get("/offers", async (req, res) => {
   try {
-    // define variables from query
     let { title, priceMin, priceMax, page, sort, limit } = req.query;
-    // define a filters object to be tested
+    // DECLARE A FILTER OBJECT TO BE TESTED
     let filters = {};
     if (title) {
       filters.product_name = new RegExp(title, "i");
@@ -181,39 +180,40 @@ router.get("/offers", async (req, res) => {
         };
       }
     }
-    // define sorted condition
+    // DECLARE SORTED CONDITIONS
     let sorted = {};
     if (sort === "price-desc") {
       sorted = { product_price: -1 };
     } else {
       sorted = { product_price: 1 };
     }
-
+    // PAGINATION
     if (Number(page) < 1) {
       page = 1;
     } else {
       page = Number(page);
     }
-
+    // FIND OFFERS
     const result = await Offer.find(filters)
       .populate({ path: "owner", select: "account" })
       .sort(sorted)
       .skip(limit * (page - 1))
       .limit(parseInt(limit));
-
+    // ADD COUNT VALUE TO DEAL WITH PAGINATION IN FRONTEND
     const count = await Offer.countDocuments(filters);
-
+    // SEND RESULT DATA
     res.json({ count: count, offers: result });
   } catch (error) {
     res.json({ msgFromOffers: error.message });
   }
 });
 
-// Get ONE offer (PARAMS)
+// READ ONE
 router.get("/offer/:id", async (req, res) => {
   try {
+    // PARAMS VALUE
     let result = await Offer.findById(req.params.id);
-
+    // ALSO INCLUDE OWNER INFORMATIONS
     result = result.populate("owner");
     res.json(result);
   } catch (error) {
@@ -222,30 +222,23 @@ router.get("/offer/:id", async (req, res) => {
 });
 
 // PAYMENT ROUTE
-// PAYMENT ROUTE
 router.post("/payment", async (req, res) => {
   try {
-    // REQ COMING FROM FRONTEND CONTAINING STRIPE TOKEN
     const { stripeToken, price, descritpion } = req.fields;
-    console.log(price);
-    console.log(stripeToken);
-    // REQ TO STRIPE API WITH DATA
+    // REQUEST TO STRIPE API WITH TOKEN AND AMOuNT
     const response = await stripe.charges.create({
       amount: Number(parseInt(price).toFixed(2)) * 100,
       currency: "eur",
       description: descritpion,
+      // SOURCE VALUE = TOKEN
       source: stripeToken,
-      // SOURCE VALUE = THE TOKEN
     });
-    console.log(response);
-
-    // SAVE IN MONGODB
-    // SAVE IN MONGODB
-    // SAVE IN MONGODB
-
+    // console.log(response);
+    // POSSIBILITY TO SAVE IN DB
     res.json(response);
   } catch (error) {
     console.log(error.message);
+    res.status(400).json({ eror: error.message });
   }
 });
 
